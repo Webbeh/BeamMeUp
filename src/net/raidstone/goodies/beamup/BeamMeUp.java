@@ -7,6 +7,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockBreakEvent;
+import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -17,15 +18,32 @@ import org.bukkit.plugin.java.JavaPlugin;
  */
 public class BeamMeUp extends JavaPlugin implements Listener
 {
+    
+    private Material item = Material.WATCH;
+    
     @Override
     public void onEnable()
     {
         Bukkit.getPluginManager().registerEvents(this, this);
+        saveDefaultConfig();
+        loadItem();
     }
     
     @Override
     public void onDisable()
     {
+    }
+    
+    /**
+     * Reads the configuration to get the item
+     */
+    public void loadItem()
+    {
+        Bukkit.getLogger().info("Getting material");
+        Material m = Material.getMaterial(this.getConfig().getString("item"));
+        Bukkit.getLogger().info("Determined to be : "+m);
+        if(m!=null)
+            item = m;
     }
     
     /**
@@ -93,7 +111,7 @@ public class BeamMeUp extends JavaPlugin implements Listener
             return;
         
         // Ignore the event if you don't have a watch in your main hand
-        if(event.getPlayer().getInventory().getItemInMainHand().getType()!=Material.WATCH)
+        if(event.getPlayer().getInventory().getItemInMainHand().getType()!=item)
             return;
     
         Player p = event.getPlayer();
@@ -135,7 +153,19 @@ public class BeamMeUp extends JavaPlugin implements Listener
     @EventHandler
     public void onBlockBreak(BlockBreakEvent event)
     {
-        if(event.getPlayer().getInventory().getItemInMainHand().getType()!=Material.WATCH || !isInsideBeam(event.getPlayer().getLocation()))
+        if(event.getPlayer().getInventory().getItemInMainHand().getType()!=item || !isInsideBeam(event.getPlayer().getLocation()))
+            return;
+        event.setCancelled(true);
+    }
+    
+    /**
+     * Prevents block placement while inside the beam holding the item
+     * @param event BlockPlaceEvent
+     */
+    @EventHandler
+    public void onBlockPlace(BlockPlaceEvent event)
+    {
+        if(event.getPlayer().getInventory().getItemInMainHand().getType()!=item || !isInsideBeam(event.getPlayer().getLocation()))
             return;
         event.setCancelled(true);
     }
