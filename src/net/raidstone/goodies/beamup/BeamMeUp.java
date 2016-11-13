@@ -6,6 +6,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
+import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -79,7 +80,7 @@ public class BeamMeUp extends JavaPlugin implements Listener
         }
         return true;
     }
-    
+   
     /**
      * The main event
      * @param event PlayerInteractEvent
@@ -87,23 +88,24 @@ public class BeamMeUp extends JavaPlugin implements Listener
     @EventHandler
     public void onClockClick(PlayerInteractEvent event)
     {
-        // Ignore the event if you haven't right/left clicked Air
-        if(event.getAction()!= Action.RIGHT_CLICK_AIR && event.getAction()!=Action.LEFT_CLICK_AIR)
+        // Ignore all actions but left/right click air
+        if(event.getAction()!=Action.LEFT_CLICK_AIR && event.getAction()!=Action.RIGHT_CLICK_AIR)
             return;
+        
         // Ignore the event if you don't have a watch in your main hand
         if(event.getPlayer().getInventory().getItemInMainHand().getType()!=Material.WATCH)
             return;
-        
-        // Check whether the player wants to go up or down
-        boolean goUp = event.getAction()==Action.LEFT_CLICK_AIR;
-        
-        
+    
         Player p = event.getPlayer();
         Location l = p.getLocation();
-        
+    
         // Check if the player is inside the beam.
         if(!isInsideBeam(l))
             return;
+       
+        // Check whether the player wants to go up or down
+        boolean goUp = event.getAction()==Action.LEFT_CLICK_AIR;
+        
         
         // Gets the next platform
         Location platform = findPlatform(l, goUp);
@@ -124,5 +126,17 @@ public class BeamMeUp extends JavaPlugin implements Listener
         p.teleport(platform.add(0.5,1.2,0.5));
         p.sendMessage(ChatColor.BLUE+""+ChatColor.ITALIC+"Woosh !");
         p.playSound(p.getLocation(),Sound.ENTITY_ENDERMEN_TELEPORT, 1, 1);
+    }
+    
+    /**
+     * Prevents a block from being broken while inside a beam
+     * @param event BlockBreakEvent
+     */
+    @EventHandler
+    public void onBlockBreak(BlockBreakEvent event)
+    {
+        if(event.getPlayer().getInventory().getItemInMainHand().getType()!=Material.WATCH || !isInsideBeam(event.getPlayer().getLocation()))
+            return;
+        event.setCancelled(true);
     }
 }
