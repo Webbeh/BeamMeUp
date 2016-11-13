@@ -104,6 +104,9 @@ public class BeamMeUp extends JavaPlugin implements Listener
     @EventHandler
     public void onClockClick(PlayerInteractEvent event)
     {
+        // No permission to use ? Lol, you're doomed.
+        if(!event.getPlayer().hasPermission("beammeup.use"))
+            return;
         // Ignore all actions but left/right click air
         if(event.getAction()!=Action.LEFT_CLICK_AIR && event.getAction()!=Action.RIGHT_CLICK_AIR)
             return;
@@ -151,6 +154,8 @@ public class BeamMeUp extends JavaPlugin implements Listener
     @EventHandler
     public void onBlockBreak(BlockBreakEvent event)
     {
+        if(!event.getPlayer().hasPermission("beammeup.use"))
+            return;
         if(event.getPlayer().getInventory().getItemInMainHand().getType()!=item || !isInsideBeam(event.getPlayer().getLocation()))
             return;
         event.setCancelled(true);
@@ -163,6 +168,8 @@ public class BeamMeUp extends JavaPlugin implements Listener
     @EventHandler
     public void onBlockPlace(BlockPlaceEvent event)
     {
+        if(!event.getPlayer().hasPermission("beammeup.use"))
+            return;
         if(event.getPlayer().getInventory().getItemInMainHand().getType()!=item || !isInsideBeam(event.getPlayer().getLocation()))
             return;
         event.setCancelled(true);
