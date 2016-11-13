@@ -39,9 +39,7 @@ public class BeamMeUp extends JavaPlugin implements Listener
      */
     public void loadItem()
     {
-        Bukkit.getLogger().info("Getting material");
         Material m = Material.getMaterial(this.getConfig().getString("item"));
-        Bukkit.getLogger().info("Determined to be : "+m);
         if(m!=null)
             item = m;
     }
