@@ -20,6 +20,12 @@ public class BeamMeUp extends JavaPlugin implements Listener
 {
     
     private Material item = Material.WATCH;
+    private String permMessage = "";
+    private String prefix = "&3&o";
+    private String blocked = "The next platform is blocked by an object !";
+    private String noplatform = "There is no platform to travel to in that direction !";
+    private String travel = "Woosh !";
+    private String permission = "beam.use";
     
     @Override
     public void onEnable()
@@ -27,11 +33,29 @@ public class BeamMeUp extends JavaPlugin implements Listener
         Bukkit.getPluginManager().registerEvents(this, this);
         saveDefaultConfig();
         loadItem();
+        
+        permMessage = trans(permMessage);
+        prefix = trans(prefix);
+        blocked = trans(blocked);
+        noplatform = trans(noplatform);
+        travel = trans(travel);
     }
     
     @Override
     public void onDisable()
     {
+    }
+    
+    /**
+     * Small shortcut that allows to translate alternate color codes
+     * @param m The message to translate
+     * @return The translated message
+     */
+    private String trans(String m)
+    {
+        if(m!=null)
+            m = ChatColor.translateAlternateColorCodes('&', m);
+        return m;
     }
     
     /**
@@ -42,6 +66,55 @@ public class BeamMeUp extends JavaPlugin implements Listener
         Material m = Material.getMaterial(this.getConfig().getString("item"));
         if(m!=null)
             item = m;
+        String perm = this.getConfig().getString("messages.noperm");
+        String pref = this.getConfig().getString("messages.prefix");
+        String bloc = this.getConfig().getString("messages.blocked");
+        String nopl = this.getConfig().getString("messages.noplat");
+        String trav = this.getConfig().getString("messages.travel");
+        String prm = this.getConfig().getString("permission");
+        
+        boolean save = false;
+        if(prm!=null)
+        {
+            if(prm.equalsIgnoreCase("none")) permission=null;
+            else permission = prm;
+        } else save=true;
+        
+        if(perm!=null)
+        {
+            if(perm.equalsIgnoreCase("none")) permMessage=null;
+            else permMessage=perm;
+        } else save=true;
+        
+        if(pref!=null)
+        {
+            if(pref.equalsIgnoreCase("none")) prefix=null;
+            else prefix=pref;
+        } else save=true;
+        
+        if(bloc!=null)
+        {
+            if(bloc.equalsIgnoreCase("none")) blocked=null;
+            else blocked=bloc;
+        } else save=true;
+        
+        if(nopl!=null)
+        {
+            if(nopl.equalsIgnoreCase("none")) noplatform=null;
+            else noplatform=nopl;
+        } else save=true;
+        
+        if(trav!=null)
+        {
+            if(trav.equalsIgnoreCase("none")) travel=null;
+            else travel=trav;
+        } else save=true;
+   
+        if(save)
+        {
+            this.getConfig().options().copyDefaults(true);
+            this.saveConfig();
+        }
     }
     
     /**
@@ -105,8 +178,12 @@ public class BeamMeUp extends JavaPlugin implements Listener
     public void onClockClick(PlayerInteractEvent event)
     {
         // No permission to use ? Lol, you're doomed.
-        if(!event.getPlayer().hasPermission("beammeup.use"))
+        if(permission!=null && !event.getPlayer().hasPermission(permission))
+        {
+            if(permMessage!=null)
+                event.getPlayer().sendMessage(permMessage);
             return;
+        }
         // Ignore all actions but left/right click air
         if(event.getAction()!=Action.LEFT_CLICK_AIR && event.getAction()!=Action.RIGHT_CLICK_AIR)
             return;
@@ -130,20 +207,23 @@ public class BeamMeUp extends JavaPlugin implements Listener
         Location platform = findPlatform(l, goUp);
         if(platform==null)
         {
-            p.sendMessage("There is no platform to travel to !");
+            if(noplatform!=null)
+                p.sendMessage(prefix+noplatform);
             return;
         }
         
         // Checks if the next platform is safe or not
         if(!isSafe(platform))
         {
-            p.sendMessage("The next platform is blocked !");
+            if(blocked!=null)
+                p.sendMessage(prefix+blocked);
             return;
         }
        
         // Teleport and play effects
         p.teleport(platform.add(0.5,1.2,0.5));
-        p.sendMessage(ChatColor.BLUE+""+ChatColor.ITALIC+"Woosh !");
+        if(travel!=null)
+            p.sendMessage(prefix+travel);
         p.playSound(p.getLocation(),Sound.ENTITY_ENDERMEN_TELEPORT, 1, 1);
     }
     
@@ -154,7 +234,7 @@ public class BeamMeUp extends JavaPlugin implements Listener
     @EventHandler
     public void onBlockBreak(BlockBreakEvent event)
     {
-        if(!event.getPlayer().hasPermission("beammeup.use"))
+        if(!event.getPlayer().hasPermission(permission))
             return;
         if(event.getPlayer().getInventory().getItemInMainHand().getType()!=item || !isInsideBeam(event.getPlayer().getLocation()))
             return;
@@ -168,7 +248,7 @@ public class BeamMeUp extends JavaPlugin implements Listener
     @EventHandler
     public void onBlockPlace(BlockPlaceEvent event)
     {
-        if(!event.getPlayer().hasPermission("beammeup.use"))
+        if(!event.getPlayer().hasPermission(permission))
             return;
         if(event.getPlayer().getInventory().getItemInMainHand().getType()!=item || !isInsideBeam(event.getPlayer().getLocation()))
             return;

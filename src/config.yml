@@ -1,1 +1,11 @@
 item: WATCH
+#If you don't want to use permissions, set the following to "none"
+permission: "beam.use"
+messages:
+  #If you want to unset a message, set it to "none".
+  noperm: "none"
+  #The prefix is applied to every messages EXCEPT the no permission message
+  prefix: "&3&o"
+  blocked: "The next platform is blocked by an object !"
+  noplat: "There is no platform to travel to in that direction !"
+  travel: "Woosh !"
