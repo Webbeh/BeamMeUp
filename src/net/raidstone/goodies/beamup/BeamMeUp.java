@@ -177,6 +177,23 @@ public class BeamMeUp extends JavaPlugin implements Listener
     @EventHandler
     public void onClockClick(PlayerInteractEvent event)
     {
+        Player p = event.getPlayer();
+        Location l = p.getLocation();
+        Action a = event.getAction();
+    
+        // Ignore the event if you don't have a watch in your main hand
+        if(p.getInventory().getItemInMainHand().getType()!=item)
+            return;
+        
+        // Check if the player is inside the beam.
+        if(!isInsideBeam(l))
+            return;
+       
+        // Ignore all actions but left/right click air
+        if(a!=Action.LEFT_CLICK_AIR && a!=Action.RIGHT_CLICK_AIR)
+            return;
+        
+    
         // No permission to use ? Lol, you're doomed.
         if(permission!=null && !event.getPlayer().hasPermission(permission))
         {
@@ -184,21 +201,7 @@ public class BeamMeUp extends JavaPlugin implements Listener
                 event.getPlayer().sendMessage(permMessage);
             return;
         }
-        // Ignore all actions but left/right click air
-        if(event.getAction()!=Action.LEFT_CLICK_AIR && event.getAction()!=Action.RIGHT_CLICK_AIR)
-            return;
         
-        // Ignore the event if you don't have a watch in your main hand
-        if(event.getPlayer().getInventory().getItemInMainHand().getType()!=item)
-            return;
-    
-        Player p = event.getPlayer();
-        Location l = p.getLocation();
-    
-        // Check if the player is inside the beam.
-        if(!isInsideBeam(l))
-            return;
-       
         // Check whether the player wants to go up or down
         boolean goUp = event.getAction()==Action.LEFT_CLICK_AIR;
         
