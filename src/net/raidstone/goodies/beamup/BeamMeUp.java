@@ -11,6 +11,9 @@ import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import java.util.HashMap;
+import java.util.UUID;
+
 /**
  * @author Weby@we-bb.com <Nicolas Glassey>
  * @version 1.0.0
@@ -27,6 +30,8 @@ public class BeamMeUp extends JavaPlugin implements Listener
     private String travel = "Woosh !";
     private String permission = "beam.use";
     
+    private HashMap<UUID, Long> times;
+    
     @Override
     public void onEnable()
     {
@@ -39,6 +44,8 @@ public class BeamMeUp extends JavaPlugin implements Listener
         blocked = trans(blocked);
         noplatform = trans(noplatform);
         travel = trans(travel);
+        
+        times = new HashMap<UUID, Long>();
     }
     
     @Override
@@ -61,7 +68,7 @@ public class BeamMeUp extends JavaPlugin implements Listener
     /**
      * Reads the configuration to get the item
      */
-    public void loadItem()
+    private void loadItem()
     {
         Material m = Material.getMaterial(this.getConfig().getString("item"));
         if(m!=null)
@@ -169,45 +176,39 @@ public class BeamMeUp extends JavaPlugin implements Listener
         }
         return true;
     }
-   
+    
     /**
-     * The main event
-     * @param event PlayerInteractEvent
+     * Teleport the player to the next location
+     * @param p Player to teleport
+     * @param up Direction, true for upwards
      */
-    @EventHandler
-    public void onClockClick(PlayerInteractEvent event)
+    private void teleport(Player p, boolean up)
     {
-        Player p = event.getPlayer();
+        UUID u = p.getUniqueId();
+        
+        // Prevent teleporting too many times in a row.
+        Long currentTime = System.currentTimeMillis();
+        
+        if(times.containsKey(u))
+        {
+            if(currentTime-times.get(u) < 100)
+                return;
+        }
+        times.put(u, currentTime);
+    
         Location l = p.getLocation();
-        Action a = event.getAction();
-    
-        // Ignore the event if you don't have a watch in your main hand
-        if(p.getInventory().getItemInMainHand().getType()!=item)
-            return;
         
-        // Check if the player is inside the beam.
-        if(!isInsideBeam(l))
-            return;
-       
-        // Ignore all actions but left/right click air
-        if(a!=Action.LEFT_CLICK_AIR && a!=Action.RIGHT_CLICK_AIR)
-            return;
-        
-    
         // No permission to use ? Lol, you're doomed.
-        if(permission!=null && !event.getPlayer().hasPermission(permission))
+        if(permission!=null && !p.hasPermission(permission))
         {
             if(permMessage!=null)
-                event.getPlayer().sendMessage(permMessage);
+                p.sendMessage(permMessage);
             return;
         }
         
-        // Check whether the player wants to go up or down
-        boolean goUp = event.getAction()==Action.LEFT_CLICK_AIR;
-        
-        
         // Gets the next platform
-        Location platform = findPlatform(l, goUp);
+        Location platform = findPlatform(l, up);
+        
         if(platform==null)
         {
             if(noplatform!=null)
@@ -229,6 +230,33 @@ public class BeamMeUp extends JavaPlugin implements Listener
             p.sendMessage(prefix+travel);
         p.playSound(p.getLocation(),Sound.ENTITY_ENDERMEN_TELEPORT, 1, 1);
     }
+   
+    /**
+     * The main event
+     * @param event PlayerInteractEvent
+     */
+    @EventHandler
+    public void onClockClick(PlayerInteractEvent event)
+    {
+        Player p = event.getPlayer();
+        Location l = p.getLocation();
+        Action a = event.getAction();
+    
+        // Ignore the event if you don't have a watch in your main hand
+        if(p.getInventory().getItemInMainHand().getType()!=item)
+            return;
+        
+        // Check if the player is inside the beam.
+        if(!isInsideBeam(l))
+            return;
+
+        // Check whether the player wants to go up or down
+        boolean goUp = a==Action.LEFT_CLICK_AIR || a==Action.LEFT_CLICK_BLOCK;
+    
+        event.setCancelled(true);
+        
+        teleport(p, goUp);
+    }
     
     /**
      * Prevents a block from being broken while inside a beam
@@ -242,6 +270,8 @@ public class BeamMeUp extends JavaPlugin implements Listener
         if(event.getPlayer().getInventory().getItemInMainHand().getType()!=item || !isInsideBeam(event.getPlayer().getLocation()))
             return;
         event.setCancelled(true);
+        
+//        teleport(event.getPlayer(), true);
     }
     
     /**
@@ -256,5 +286,7 @@ public class BeamMeUp extends JavaPlugin implements Listener
         if(event.getPlayer().getInventory().getItemInMainHand().getType()!=item || !isInsideBeam(event.getPlayer().getLocation()))
             return;
         event.setCancelled(true);
+        
+//        teleport(event.getPlayer(), false);
     }
 }
